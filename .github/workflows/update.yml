@@ -1,0 +1,39 @@
+name: Cập nhật báo cáo hàng ngày
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 7h sáng giờ Việt Nam (UTC+7)
+  workflow_dispatch:       # Cho phép chạy tay trên GitHub
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install
+
+      - name: Fetch data từ Lark Base
+        run: node scripts/fetch.js
+        env:
+          LARK_APP_ID: ${{ secrets.LARK_APP_ID }}
+          LARK_APP_SECRET: ${{ secrets.LARK_APP_SECRET }}
+          LARK_BASE_ID: ${{ secrets.LARK_BASE_ID }}
+          TABLE_SALE: ${{ secrets.TABLE_SALE }}
+          TABLE_DOANHTHU: ${{ secrets.TABLE_DOANHTHU }}
+          TABLE_CHI: ${{ secrets.TABLE_CHI }}
+
+      - name: Generate HTML báo cáo
+        run: node scripts/gen.js
+
+      - name: Push lên GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html report/
+          git diff --staged --quiet || git commit -m "Auto: cập nhật báo cáo $(date +'%d/%m/%Y %H:%M')"
+          git push
