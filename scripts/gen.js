@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA = path.join(__dirname, '..', 'report');
-const OUT  = path.join(__dirname, '..', 'report');
+const OUT  = path.join(__dirname, '..');
 
 const PERIOD   = process.argv[2] || thangHienTai();
 const GEN_TIME = new Date().toLocaleString('vi-VN');
@@ -94,6 +94,13 @@ const topDv = Object.entries(byDv).sort((a,b)=>b[1]-a[1]).slice(0,6);
 const byTT = {};
 slF.forEach(r => { const k=getText(r['Trạng Thái'])||'Chưa xác định'; byTT[k]=(byTT[k]||0)+1; });
 const topTT = Object.entries(byTT).sort((a,b)=>b[1]-a[1]);
+
+// KPI: Tỷ lệ lên lịch hẹn thành công
+const TT_THANH_CONG = ['ĐÃ TƯ VẤN','ĐÃ CỌC','ĐÃ LÀM DỊCH VỤ','ĐÃ LÀM DV DƯỚI 5Tr','ĐÃ THANH TOÁN'];
+const NGUON_ONLINE  = ['FB/ONL','FB/ONL CŨ'];
+const slFBOnl      = slF.filter(r => NGUON_ONLINE.includes(getText(r['NGUỒN']).trim()));
+const slThanhCong  = slFBOnl.filter(r => TT_THANH_CONG.includes(getText(r['Trạng Thái']).trim()));
+const tyLeHen      = slFBOnl.length > 0 ? Math.round(slThanhCong.length / slFBOnl.length * 100) : 0;
 
 // Sale: theo nhân viên
 const bySP = {};
@@ -191,7 +198,7 @@ const html = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta n
   ${FX}
   <div class="hero-in">
     <div class="hero-doc">Báo cáo bộ phận lễ tân</div>
-    <h1>Viola Clinic</h1>
+    <h1>Viện Thẩm Mỹ Quốc Tế Viola</h1>
     <div class="sub">Tổng hợp thu chi · doanh thu · sale phone / khách</div>
     <div>
       <span class="badge-period">📅 ${esc(PERIOD)}</span>
@@ -270,6 +277,23 @@ const html = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta n
 
 <!-- TAB: SALE -->
 <div class="tab-panel" id="tab-sale">
+
+  <div class="card">
+    <h2>🎯 Tỷ lệ lên lịch hẹn thành công (FB/ONL)</h2>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+      <div class="stat"><div class="v" style="color:#ff4400;font-size:32px">${tyLeHen}%</div><div class="l">Tỷ lệ thành công</div></div>
+      <div class="stat"><div class="v" style="color:#16a34a">${slThanhCong.length}</div><div class="l">Đã tư vấn / cọc / làm DV</div></div>
+      <div class="stat"><div class="v" style="color:#2563eb">${slFBOnl.length}</div><div class="l">Tổng khách FB/ONL</div></div>
+    </div>
+    <div class="tbig">
+      <div class="tpct" style="color:#ff4400">${tyLeHen}%</div>
+      <div class="tbar">
+        <div class="kpi-track"><div class="kpi-fill" style="width:${tyLeHen}%;background:#ff4400"></div></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">${slThanhCong.length} / ${slFBOnl.length} khách FB/ONL lên lịch thành công</div>
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <h2>📞 Sale phone theo nhân viên</h2>
     ${topSP.map(([k,v])=>kpiBar(k,v,maxSP,'#c8a951')).join('')}
@@ -293,7 +317,7 @@ const html = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta n
 <div class="foot">
   ${FX}
   <div class="foot-in">
-    <div class="ftag">Báo cáo nội bộ · Viola Clinic</div>
+    <div class="ftag">Báo cáo nội bộ · Viện Thẩm Mỹ Quốc Tế Viola</div>
     <div class="fc">Bộ phận Lễ Tân - Tư Vấn<br>Số liệu cập nhật: <b>${esc(GEN_TIME)}</b></div>
   </div>
 </div>
